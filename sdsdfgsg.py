@@ -1,39 +1,141 @@
 import asyncio
-from aiogram import Router
-from aiogram.filters import Command
+import logging
+import sys
+from os import getenv
+from typing import Any, Dict
+
+from aiogram import Bot, Dispatcher, F, Router, html
+from aiogram.client.default import DefaultBotProperties
+from aiogram.enums import ParseMode
+from aiogram.filters import Command, CommandStart
 from aiogram.fsm.context import FSMContext
-from aiogram.fsm.state import StatesGroup, State
-from aiogram.types import Message
-from yandex_music import Client
-import services.yandex_music.yandex_sync as ym
-from config.get_env import YANDEX_TOKEN
+from aiogram.fsm.state import State, StatesGroup
+from aiogram.types import (
+    KeyboardButton,
+    Message,
+    ReplyKeyboardMarkup,
+    ReplyKeyboardRemove,
+)
 
-# Определяем состояния
-class WaitingLinkState(StatesGroup):
-    waiting_for_link = State()  # Состояние ожидания ссылки
+TOKEN = "8213572850:AAENIRBTNOb70wxxMta59r1jOCPzckq1CUw"
 
-router = Router()
+form_router = Router()
 
-@router.message(Command('yandex'))
-async def start_yandex(message: Message, state: FSMContext):
-    await state.set_state(WaitingLinkState.waiting_for_link)
-    await message.reply("ватафак нигга грузи ссылочку на яндекс тречок")
 
-@router.message(WaitingLinkState.waiting_for_link)
-async def process_yandex_link(message: Message, state: FSMContext):
-    link = message.text
-    loading_message = await message.reply("Загрузка пошла")
-    try:
-        ya_client = Client(YANDEX_TOKEN).init()
-        id_track = ym.extract_id_from_url(link)
-        track_id, cover_id = await save_track_yandex_async(ya_client, id_track)
-        if track_id and cover_id:
-            await loading_message.edit_text(f"Трек сохранен под id = {track_id} и его обложка под id = {cover_id}")
-        else:
-            await loading_message.edit_text("Трек не сохранен ((")
-    except Exception as e:
-        await loading_message.edit_text(f"Произошла ошибка: {str(e)}")
+class Form(StatesGroup):
+    name = State()
+    like_bots = State()
+    language = State()
+
+
+@form_router.message(CommandStart())
+async def command_start(message: Message, state: FSMContext) -> None:
+    await state.set_state(Form.name)
+    await message.answer(
+        "Hi there! What's your name?",
+        reply_markup=ReplyKeyboardRemove(),
+    )
+
+
+@form_router.message(Command("cancel"))
+@form_router.message(F.text.casefold() == "cancel")
+async def cancel_handler(message: Message, state: FSMContext) -> None:
+    """
+    Allow user to cancel any action
+    """
+    current_state = await state.get_state()
+    if current_state is None:
+        return
+
+    logging.info("Cancelling state %r", current_state)
+    await state.clear()
+    await message.answer(
+        "Cancelled.",
+        reply_markup=ReplyKeyboardRemove(),
+    )
+
+
+@form_router.message(Form.name)
+async def process_name(message: Message, state: FSMContext) -> None:
+    await state.update_data(name=message.text)
+    await state.set_state(Form.like_bots)
+    await message.answer(
+        f"Nice to meet you, {html.quote(message.text)}!\nDid you like to write bots?",
+        reply_markup=ReplyKeyboardMarkup(
+            keyboard=[
+                [
+                    KeyboardButton(text="Yes"),
+                    KeyboardButton(text="No"),
+                ]
+            ],
+            resize_keyboard=True,
+        ),
+    )
+
+
+@form_router.message(Form.like_bots, F.text.casefold() == "no")
+async def process_dont_like_write_bots(message: Message, state: FSMContext) -> None:
+    data = await state.get_data()
+    await state.clear()
+    await message.answer(
+        "Not bad not terrible.\nSee you soon.",
+        reply_markup=ReplyKeyboardRemove(),
+    )
+    await show_summary(message=message, data=data, positive=False)
+
+
+@form_router.message(Form.like_bots, F.text.casefold() == "yes")
+async def process_like_write_bots(message: Message, state: FSMContext) -> None:
+    await state.set_state(Form.language)
+
+    await message.reply(
+        "Cool! I'm too!\nWhat programming language did you use for it?",
+        reply_markup=ReplyKeyboardRemove(),
+    )
+
+
+@form_router.message(Form.like_bots)
+async def process_unknown_write_bots(message: Message) -> None:
+    await message.reply("I don't understand you :(")
+
+
+@form_router.message(Form.language)
+async def process_language(message: Message, state: FSMContext) -> None:
+    data = await state.update_data(language=message.text)
     await state.clear()
 
-async def save_track_yandex_async(ya_client: Client, track_id: int):
-    return await asyncio.to_thread(ym.save_track, ya_client, track_id)
+    if message.text.casefold() == "python":
+        await message.reply(
+            "Python, you say? That's the language that makes my circuits light up! 😉"
+        )
+
+    await show_summary(message=message, data=data)
+
+
+async def show_summary(message: Message, data: Dict[str, Any], positive: bool = True) -> None:
+    name = data["name"]
+    language = data.get("language", "<something unexpected>")
+    text = f"I'll keep in mind that, {html.quote(name)}, "
+    text += (
+        f"you like to write bots with {html.quote(language)}."
+        if positive
+        else "you don't like to write bots, so sad..."
+    )
+    await message.answer(text=text, reply_markup=ReplyKeyboardRemove())
+
+
+async def main():
+    # Initialize Bot instance with default bot properties which will be passed to all API calls
+    bot = Bot(token=TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
+
+    dp = Dispatcher()
+
+    dp.include_router(form_router)
+
+    # Start event dispatching
+    await dp.start_polling(bot)
+
+
+if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO, stream=sys.stdout)
+    asyncio.run(main())

@@ -5,6 +5,7 @@ load_dotenv()
 
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_ANON_KEY = os.getenv("SUPABASE_ANON_KEY")
+SUPABASE_SERVICE_KEY = os.getenv("SUPABASE_SERVICE_KEY")
 DEFAULT_COVER = os.getenv("DEFAULT_COVER", "")
 YANDEX_TOKEN = os.getenv("YANDEX_TOKEN", "")
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN", "")

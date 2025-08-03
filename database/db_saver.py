@@ -1,15 +1,15 @@
 import os
 from supabase import create_client, Client
-from dotenv import load_dotenv
+from config.get_env import SUPABASE_URL, SUPABASE_SERVICE_KEY
+from database.supabase_connection import get_supabase_sync_client
 
-load_dotenv()
-SUPABASE_URL = os.getenv("SUPABASE_URL")
-SUPABASE_KEY = os.getenv("SUPABASE_KEY")
-supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
-
+def get_supabase() -> Client:
+    """Get the Supabase client instance."""
+    return get_supabase_sync_client()
 
 ## получаем ссылку на supabase
 def get_url(bucket_name, file_path):
+    supabase = get_supabase()
     public_url = supabase.storage.from_(bucket_name).get_public_url(file_path)
     print(f"public_url: {public_url}")
     return public_url
@@ -17,6 +17,7 @@ def get_url(bucket_name, file_path):
 
 # сохранение трека в бд
 def save_track_to_db(title, signed_url, playlist_id=None):
+    supabase = get_supabase()
     result = supabase.table("tracks").select("track_id").eq("title", title).execute()
 
     if result.data:
@@ -36,6 +37,7 @@ def save_track_to_db(title, signed_url, playlist_id=None):
 
 # сохранение плейлиста в бд
 def save_playlist_to_db(title):
+    supabase = get_supabase()
     result = (
         supabase.table("playlists").select("playlist_id").eq("title", title).execute()
     )
@@ -55,6 +57,7 @@ def save_playlist_to_db(title):
 
 # сохрание обложки в бд
 def save_cover_to_db(solo_track_id, public_cover_url):
+    supabase = get_supabase()
     result = (
         supabase.table("covers")
         .select("cover_id")
