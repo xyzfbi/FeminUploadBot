@@ -1,4 +1,3 @@
-import os
 
 import logging
 from typing import Optional, Tuple, Union
@@ -14,7 +13,10 @@ from database.supabase_connection import get_supabase_sync_client
 from database import db_saver
 from yandex_music import Client
 from services.yandex_music.yandex_config import YANDEX_CONFIG, ERROR_MESSAGES
-from config.get_env import YANDEX_TOKEN, DEFAULT_COVER, SUPABASE_URL, SUPABASE_SERVICE_KEY
+from config.get_env import (
+    YANDEX_TOKEN,
+    DEFAULT_COVER,
+)
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s -- %(levelname)s -- %(message)s"
@@ -192,7 +194,6 @@ def save_album() -> None:
 
 
 if __name__ == "__main__":
-
     supabase: SyncClient = get_supabase_sync_client()
     YandexClient = Client(YANDEX_TOKEN).init()
     url = input("Enter Yandex URL: ")

@@ -1,11 +1,11 @@
-import os
-from supabase import create_client, Client
-from config.get_env import SUPABASE_URL, SUPABASE_SERVICE_KEY
+from supabase import Client
 from database.supabase_connection import get_supabase_sync_client
+
 
 def get_supabase() -> Client:
     """Get the Supabase client instance."""
     return get_supabase_sync_client()
+
 
 ## получаем ссылку на supabase
 def get_url(bucket_name, file_path):

@@ -9,7 +9,7 @@ import keyboards.keyboard as kb
 router = Router()
 
 
-@router.message(Command('start'))
+@router.message(Command("start"))
 async def start_command(message: Message):
     user_id = message.chat.id
     keyboard = kb.main_keyboard()
