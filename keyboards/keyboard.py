@@ -12,3 +12,13 @@ def main_keyboard() -> ReplyKeyboardMarkup:
         one_time_keyboard=False,
     )
     return keyboard
+
+def choice_keyboard() -> ReplyKeyboardMarkup:
+    keyboard = ReplyKeyboardMarkup(
+        keyboard=[
+            [KeyboardButton(text="/stop")],
+        ],
+        resize_keyboard = True,
+        one_time_keyboard = False,
+    )
+    return keyboard
