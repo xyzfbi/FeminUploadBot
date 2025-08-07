@@ -1,7 +1,8 @@
 # FeminUploadBot
-
-![GitHub](https://img.shields.io/github/license/xyzfbi/FeminUploadBot)
+![GitHub license](https://img.shields.io/github/license/xyzfbi/FeminUploadBot)
 ![GitHub last commit](https://img.shields.io/github/last-commit/xyzfbi/FeminUploadBot)
+![GitHub stars](https://img.shields.io/github/stars/xyzfbi/FeminUploadBot?style=social)
+
 
 **FeminUploadBot** — это Telegram-бот, предназначенный для загрузки музыкальных треков на платформу [Femin](https://github.com/lyweze/femin). Он упрощает процесс отправки треков (включая треки из Яндекс Музыки) напрямую в сервис обмена музыкой Femin, позволяя пользователям легко делиться и управлять загрузками.
 
